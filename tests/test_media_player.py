@@ -54,3 +54,8 @@ async def test_media_player_maps_soloist_state(hass: HomeAssistant) -> None:
 
     assert not player.available
     assert player.state == MediaPlayerState.IDLE
+
+    coordinator.async_set_updated_data({**coordinator.data, "is_active": True})
+
+    assert player.available
+    assert player.state == MediaPlayerState.PLAYING

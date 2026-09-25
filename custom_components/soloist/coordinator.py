@@ -35,7 +35,9 @@ class SoloistCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Coordinate pushed Soloist state and commands."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        super().__init__(hass, _LOGGER, name="Spotify Soloist", always_update=True)
+        super().__init__(
+            hass, _LOGGER, name="Spotify Soloist", always_update=True
+        )
         self.entry = entry
         self.host = entry.data["host"]
         self.port = entry.data["port"]
@@ -113,9 +115,15 @@ class SoloistCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     aiohttp.WSMsgType.ERROR,
                 ):
                     break
-        except (aiohttp.ClientError, asyncio.CancelledError, json.JSONDecodeError):
+        except (
+            aiohttp.ClientError,
+            asyncio.CancelledError,
+            json.JSONDecodeError,
+        ):
             if not self._stop_requested:
-                _LOGGER.debug("Soloist WebSocket listener stopped", exc_info=True)
+                _LOGGER.debug(
+                    "Soloist WebSocket listener stopped", exc_info=True
+                )
         finally:
             self.websocket = None
             if not self._stop_requested:
@@ -139,6 +147,8 @@ class SoloistCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             data = {**(self.data or {}), "volume": message.get("volume")}
         elif event_type == "device_changed":
             data = {**(self.data or {}), **message}
+            if message.get("is_active") and self.logged_in and self.connected:
+                await self._send_command("get_state")
         elif event_type == "context_changed":
             data = {**(self.data or {}), "context": message.get("context")}
         elif event_type == "options_changed":
@@ -147,7 +157,9 @@ class SoloistCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             data = {**(self.data or {}), "position": message.get("position")}
             self._set_position_anchor(message.get("position"))
         elif event_type == "error":
-            _LOGGER.warning("Soloist rejected command: %s", message.get("message"))
+            _LOGGER.warning(
+                "Soloist rejected command: %s", message.get("message")
+            )
             data = self.data or {}
         else:
             data = self.data or {}
@@ -199,10 +211,17 @@ class SoloistCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def _reconnect(self) -> None:
         await asyncio.sleep(self._reconnect_delay)
-        self._reconnect_delay = min(self._reconnect_delay * 2, RECONNECT_MAX_DELAY)
+        self._reconnect_delay = min(
+            self._reconnect_delay * 2, RECONNECT_MAX_DELAY
+        )
         try:
             await self._connect()
-        except (aiohttp.ClientError, asyncio.TimeoutError, ConnectionError, OSError):
+        except (
+            aiohttp.ClientError,
+            asyncio.TimeoutError,
+            ConnectionError,
+            OSError,
+        ):
             if not self._stop_requested:
                 self._schedule_reconnect()
 

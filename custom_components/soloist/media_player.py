@@ -28,7 +28,9 @@ async def async_setup_entry(
     async_add_entities([SoloistMediaPlayer(coordinator, entry)])
 
 
-class SoloistMediaPlayer(CoordinatorEntity[SoloistCoordinator], MediaPlayerEntity):
+class SoloistMediaPlayer(
+    CoordinatorEntity[SoloistCoordinator], MediaPlayerEntity
+):
     """Represent one Spotify Soloist player."""
 
     _attr_has_entity_name = True
@@ -42,7 +44,9 @@ class SoloistMediaPlayer(CoordinatorEntity[SoloistCoordinator], MediaPlayerEntit
         | MediaPlayerEntityFeature.VOLUME_SET
     )
 
-    def __init__(self, coordinator: SoloistCoordinator, entry: ConfigEntry) -> None:
+    def __init__(
+        self, coordinator: SoloistCoordinator, entry: ConfigEntry
+    ) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = entry.unique_id
         self._attr_device_info = {
@@ -74,7 +78,9 @@ class SoloistMediaPlayer(CoordinatorEntity[SoloistCoordinator], MediaPlayerEntit
 
     @property
     def media_title(self) -> str | None:
-        return self._item.get("decorations", {}).get("identity", {}).get("name")
+        return (
+            self._item.get("decorations", {}).get("identity", {}).get("name")
+        )
 
     @property
     def media_artist(self) -> str | None:
@@ -162,4 +168,6 @@ class SoloistMediaPlayer(CoordinatorEntity[SoloistCoordinator], MediaPlayerEntit
         await self.coordinator.async_command("skip_prev")
 
     async def async_set_volume_level(self, volume: float) -> None:
-        await self.coordinator.async_command("set_volume", volume=round(volume * 100))
+        await self.coordinator.async_command(
+            "set_volume", volume=round(volume * 100)
+        )

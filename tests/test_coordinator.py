@@ -53,9 +53,7 @@ async def test_granular_events_merge_state(hass: HomeAssistant) -> None:
     await coordinator._handle_message(
         {"type": "playback_state", "status": "paused", "volume": 10}
     )
-    await coordinator._handle_message(
-        {"type": "volume_changed", "volume": 42}
-    )
+    await coordinator._handle_message({"type": "volume_changed", "volume": 42})
     await coordinator._handle_message(
         {"type": "playback_changed", "status": "playing"}
     )
@@ -94,3 +92,21 @@ async def test_inactive_device_blocks_commands(hass: HomeAssistant) -> None:
 
     assert not coordinator.active
     websocket.send_json.assert_not_awaited()
+
+
+async def test_reactivated_device_refreshes_state(hass: HomeAssistant) -> None:
+    """Reactivating Soloist requests a fresh playback snapshot."""
+    coordinator = SoloistCoordinator(hass, make_entry())
+    coordinator.async_set_updated_data({"logged_in": True, "is_active": False})
+    websocket = AsyncMock()
+    websocket.closed = False
+    coordinator.websocket = websocket
+
+    await coordinator._handle_message(
+        {"type": "device_changed", "is_active": True}
+    )
+
+    assert coordinator.active
+    websocket.send_json.assert_awaited_once_with(
+        {"type": "command", "command": "get_state"}
+    )
