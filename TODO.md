@@ -15,4 +15,3 @@
 - Add broader protocol and reconnect test coverage.
 - Run Hassfest in CI.
 - Add CI for Ruff and focused pytest tests.
-- Add branding assets and confirm HACS repository metadata.
