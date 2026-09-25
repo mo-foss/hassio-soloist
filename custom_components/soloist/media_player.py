@@ -7,6 +7,7 @@ from homeassistant.components.media_player import (
     MediaPlayerEntityFeature,
     MediaPlayerState,
     MediaType,
+    RepeatMode,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
@@ -42,6 +43,9 @@ class SoloistMediaPlayer(
         | MediaPlayerEntityFeature.NEXT_TRACK
         | MediaPlayerEntityFeature.PREVIOUS_TRACK
         | MediaPlayerEntityFeature.VOLUME_SET
+        | MediaPlayerEntityFeature.SEEK
+        | MediaPlayerEntityFeature.SHUFFLE_SET
+        | MediaPlayerEntityFeature.REPEAT_SET
     )
 
     def __init__(
@@ -152,6 +156,20 @@ class SoloistMediaPlayer(
         return volume / 100 if volume is not None else None
 
     @property
+    def shuffle(self) -> bool | None:
+        """Return whether shuffle is enabled."""
+        return self._options.get("shuffle")
+
+    @property
+    def repeat(self) -> RepeatMode | None:
+        """Return the Home Assistant repeat mode."""
+        return {
+            "off": RepeatMode.OFF,
+            "context": RepeatMode.ALL,
+            "track": RepeatMode.ONE,
+        }.get(self._options.get("repeat"))
+
+    @property
     def _item(self) -> dict:
         return (self.coordinator.data or {}).get("item") or {}
 
@@ -171,3 +189,41 @@ class SoloistMediaPlayer(
         await self.coordinator.async_command(
             "set_volume", volume=round(volume * 100)
         )
+
+    async def async_media_seek(self, position: float) -> None:
+        """Seek to a position in seconds."""
+        await self.coordinator.async_command(
+            "seek", position_ms=round(position * 1000)
+        )
+
+    async def async_set_shuffle(self, shuffle: bool) -> None:
+        """Enable or disable shuffle."""
+        await self.coordinator.async_command("set_shuffle", enabled=shuffle)
+
+    async def async_set_repeat(self, repeat: RepeatMode) -> None:
+        """Set Soloist's repeat mode."""
+        if repeat == RepeatMode.OFF:
+            await self.coordinator.async_command(
+                "set_repeat_track", enabled=False
+            )
+            await self.coordinator.async_command(
+                "set_repeat_context", enabled=False
+            )
+        elif repeat == RepeatMode.ALL:
+            await self.coordinator.async_command(
+                "set_repeat_track", enabled=False
+            )
+            await self.coordinator.async_command(
+                "set_repeat_context", enabled=True
+            )
+        elif repeat == RepeatMode.ONE:
+            await self.coordinator.async_command(
+                "set_repeat_context", enabled=False
+            )
+            await self.coordinator.async_command(
+                "set_repeat_track", enabled=True
+            )
+
+    @property
+    def _options(self) -> dict:
+        return (self.coordinator.data or {}).get("options") or {}

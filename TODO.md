@@ -2,9 +2,6 @@
 
 ## Playback features
 
-- Add seek support using Soloist's `seek` command.
-- Add shuffle control and state.
-- Add repeat mode control and state.
 - Add queue browsing and queue metadata.
 - Consider exposing add-to-queue support.
 
