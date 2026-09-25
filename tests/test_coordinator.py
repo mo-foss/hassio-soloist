@@ -67,6 +67,7 @@ async def test_granular_events_merge_state(hass: HomeAssistant) -> None:
 async def test_commands_use_soloist_envelope(hass: HomeAssistant) -> None:
     """Control commands use Soloist's documented JSON envelope."""
     coordinator = SoloistCoordinator(hass, make_entry())
+    coordinator.async_set_updated_data({"logged_in": True, "is_active": True})
     websocket = AsyncMock()
     websocket.closed = False
     coordinator.websocket = websocket
@@ -76,3 +77,20 @@ async def test_commands_use_soloist_envelope(hass: HomeAssistant) -> None:
     websocket.send_json.assert_awaited_once_with(
         {"type": "command", "command": "set_volume", "volume": 50}
     )
+
+
+async def test_inactive_device_blocks_commands(hass: HomeAssistant) -> None:
+    """Commands are blocked after playback moves to another device."""
+    coordinator = SoloistCoordinator(hass, make_entry())
+    coordinator.async_set_updated_data({"logged_in": True, "is_active": True})
+    websocket = AsyncMock()
+    websocket.closed = False
+    coordinator.websocket = websocket
+
+    await coordinator._handle_message(
+        {"type": "device_changed", "is_active": False}
+    )
+    await coordinator.async_command("pause")
+
+    assert not coordinator.active
+    websocket.send_json.assert_not_awaited()

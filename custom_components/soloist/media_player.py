@@ -54,10 +54,16 @@ class SoloistMediaPlayer(CoordinatorEntity[SoloistCoordinator], MediaPlayerEntit
 
     @property
     def available(self) -> bool:
-        return self.coordinator.connected
+        return (
+            self.coordinator.connected
+            and self.coordinator.logged_in
+            and self.coordinator.active
+        )
 
     @property
     def state(self) -> MediaPlayerState:
+        if not self.coordinator.active:
+            return MediaPlayerState.IDLE
         status = (self.coordinator.data or {}).get("status")
         return {
             "playing": MediaPlayerState.PLAYING,

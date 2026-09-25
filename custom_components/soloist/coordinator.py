@@ -57,6 +57,11 @@ class SoloistCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Return whether Soloist reports an authenticated session."""
         return bool(self.data and self.data.get("logged_in"))
 
+    @property
+    def active(self) -> bool:
+        """Return whether Soloist is the active Spotify Connect device."""
+        return bool(self.data and self.data.get("is_active"))
+
     async def _async_update_data(self) -> dict[str, Any]:
         if self._session is None:
             self._session = aiohttp.ClientSession()
@@ -176,7 +181,8 @@ class SoloistCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def async_command(self, command: str, **fields: Any) -> None:
         """Send a control command to Soloist."""
-        if not self.connected:
+        if not self.connected or not self.logged_in or not self.active:
+            _LOGGER.debug("Ignoring Soloist command while device is inactive")
             return
         await self._send_command(command, **fields)
 
