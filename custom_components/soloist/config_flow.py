@@ -31,7 +31,7 @@ class SoloistConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     ) as websocket,
                 ):
                     await websocket.receive(timeout=WS_TIMEOUT)
-            except aiohttp.ClientError, TimeoutError, OSError:
+            except (aiohttp.ClientError, TimeoutError, OSError):
                 errors["base"] = "cannot_connect"
             else:
                 unique_id = f"{user_input[CONF_HOST]}:{user_input[CONF_PORT]}"
