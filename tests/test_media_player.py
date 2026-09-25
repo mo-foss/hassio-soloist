@@ -25,6 +25,12 @@ async def test_media_player_maps_soloist_state(hass: HomeAssistant) -> None:
                 "decorations": {
                     "identity": {"name": "Test track"},
                     "playback": {"duration_ms": 120000},
+                    "visual_identity": {
+                        "cover": [
+                            {"size": "small", "url": "https://example/small"},
+                            {"size": "xlarge", "url": "https://example/xlarge"},
+                        ]
+                    },
                 }
             },
         }
@@ -33,4 +39,5 @@ async def test_media_player_maps_soloist_state(hass: HomeAssistant) -> None:
 
     assert player.state == MediaPlayerState.PLAYING
     assert player.media_title == "Test track"
+    assert player.media_image_url == "https://example/xlarge"
     assert player.volume_level == 0.25

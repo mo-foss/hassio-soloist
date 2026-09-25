@@ -95,7 +95,19 @@ class SoloistMediaPlayer(CoordinatorEntity[SoloistCoordinator], MediaPlayerEntit
             .get("visual_identity", {})
             .get("cover", [])
         )
-        return next((cover.get("url") for cover in covers if cover.get("url")), None)
+        covers_by_size = {
+            cover.get("size"): cover.get("url")
+            for cover in covers
+            if cover.get("url")
+        }
+        return next(
+            (
+                covers_by_size[size]
+                for size in ("xlarge", "large", "default", "small")
+                if covers_by_size.get(size)
+            ),
+            None,
+        )
 
     @property
     def media_duration(self) -> float | None:
